@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "postbuild": "echo \"🎉 Build successful in dist.\"",
-    "dev": "nodemon --watch src --exec ts-node src/index.ts"
+    "dev": "nodemon --watch src --exec node --no-warnings --loader ts-node/esm src/index.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.27.0",
