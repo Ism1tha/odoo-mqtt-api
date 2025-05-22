@@ -1,2 +1,12 @@
-node_modules
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# dotenv environment variables file
 .env
+
+# OS and editor files
+.DS_Store
+.vscode/

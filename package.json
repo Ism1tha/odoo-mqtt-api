@@ -5,6 +5,8 @@
   "author": "Ism1tha",
   "type": "module",
   "scripts": {
+    "build": "tsc",
+    "postbuild": "echo \"🎉 Build successful in dist.\"",
     "dev": "nodemon --watch src --exec ts-node src/index.ts"
   },
   "devDependencies": {
