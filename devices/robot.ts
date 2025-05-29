@@ -10,7 +10,7 @@ export enum RobotStatus {
 
 const { info } = terminal;
 
-class Robot {
+class SimulationRobot {
   private app: express.Application;
   private status: RobotStatus;
   private port: number;
@@ -80,4 +80,4 @@ class Robot {
   }
 }
 
-export default Robot;
+export default SimulationRobot;
