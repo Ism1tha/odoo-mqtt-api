@@ -7,6 +7,9 @@ dist/
 # dotenv environment variables file
 .env
 
+# database files
+*.sqlite
+
 # OS and editor files
 .DS_Store
 .vscode/

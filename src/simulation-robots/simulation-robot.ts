@@ -1,24 +1,19 @@
 import express from 'express';
 
-import terminal from '../src/utils/terminal.js';
-
-export enum RobotStatus {
-  IDLE = 'IDLE',
-  RUNNING = 'RUNNING',
-  STOPPED = 'STOPPED',
-}
+import terminal from '../utils/terminal.js';
+import { SimulationRobotStatus } from './simulation-robot.types.js';
 
 const { info } = terminal;
 
 class SimulationRobot {
   private app: express.Application;
-  private status: RobotStatus;
+  private status: SimulationRobotStatus;
   private port: number;
   private robotId: string;
 
   constructor(robotId: string, port: number) {
     this.app = express();
-    this.status = RobotStatus.IDLE;
+    this.status = SimulationRobotStatus.IDLE;
     this.port = port;
     this.robotId = robotId;
     this.setupRoutes();
@@ -28,7 +23,7 @@ class SimulationRobot {
     this.app.use(express.json());
 
     this.app.post('/start', (req, res) => {
-      this.status = RobotStatus.RUNNING;
+      this.status = SimulationRobotStatus.RUNNING;
       info(`Robot ${this.robotId} started`);
       res.json({
         message: `Robot ${this.robotId} started`,
@@ -38,7 +33,7 @@ class SimulationRobot {
     });
 
     this.app.post('/stop', (req, res) => {
-      this.status = RobotStatus.IDLE;
+      this.status = SimulationRobotStatus.IDLE;
       info(`Robot ${this.robotId} stopped`);
       res.json({
         message: `Robot ${this.robotId} stopped`,
@@ -59,15 +54,15 @@ class SimulationRobot {
     this.app.listen(this.port, () => {
       info(`Robot ${this.robotId} is running on port ${this.port}`);
     });
-    this.status = RobotStatus.RUNNING;
+    this.status = SimulationRobotStatus.RUNNING;
   }
 
   public stop(): void {
-    this.status = RobotStatus.IDLE;
+    this.status = SimulationRobotStatus.IDLE;
     info(`Robot ${this.robotId} stopped`);
   }
 
-  public getStatus(): RobotStatus {
+  public getStatus(): SimulationRobotStatus {
     return this.status;
   }
 

@@ -1,9 +1,10 @@
 import express from 'express';
 
-import SimulationRobot from '../devices/robot.js';
-import terminal from '../src/utils/terminal.js';
+import { setupDatabase } from './database.js';
 import routes from './routes.js';
+import SimulationRobot from './simulation-robots/simulation-robot.js';
 import { parsePort } from './utils/extra.js';
+import terminal from './utils/terminal.js';
 
 const { clear, error, engine } = terminal;
 
@@ -20,7 +21,7 @@ const ROBOT1_PORT = parsePort(process.env.SIMULATE_MQTT_ROBOT1_BIND_PORT, 3001);
 const ROBOT2_PORT = parsePort(process.env.SIMULATE_MQTT_ROBOT2_BIND_PORT, 3002);
 
 // --- Robot Setup ---
-const setupRobots = (): void => {
+const setupRobots = async (): Promise<void> => {
   if (!SIMULATE_ROBOTS) return;
 
   try {
@@ -31,8 +32,6 @@ const setupRobots = (): void => {
     robot2.start();
 
     robots.push(robot1, robot2);
-
-    engine(`Simulation robots started on ports ${ROBOT1_PORT}, ${ROBOT2_PORT}`);
   } catch (err) {
     error('Error setting up simulation robots.');
     throw err;
@@ -40,10 +39,10 @@ const setupRobots = (): void => {
 };
 
 // --- Engine Startup ---
-export const startEngine = (): void => {
+export const startEngine = async (): Promise<void> => {
   try {
-    setupRobots();
-
+    await setupDatabase();
+    await setupRobots();
     app.listen(BIND_PORT, () => {
       engine(`Engine is running on port ${BIND_PORT} and waiting for instructions...`);
     });
