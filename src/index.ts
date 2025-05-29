@@ -1,5 +1,13 @@
 import 'dotenv/config';
 
-console.log('Hello, world! This is a test.');
-console.log('Bind address:', process.env.BIND_ADDRESS);
-console.log('Bind port:', process.env.BIND_PORT);
+import { startEngine } from './engine.js';
+import { ConsoleColors } from './utils/colors.js';
+import terminal from './utils/terminal.js';
+
+const { message, clear } = terminal;
+
+clear();
+message('Odoo MQTT API - Press Ctrl+C to exit', ConsoleColors.GREEN);
+message('GitHub repository: https://github.com/Ism1tha/odoo-mqtt-api\n', ConsoleColors.DEFAULT);
+
+startEngine();

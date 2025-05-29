@@ -7,13 +7,14 @@
   "scripts": {
     "build": "tsc",
     "postbuild": "echo \"🎉 Build successful in dist.\"",
-    "dev": "nodemon --watch src --exec node --no-warnings --loader ts-node/esm src/index.ts"
+    "dev": "nodemon --watch src --exec node --no-warnings --quiet --loader ts-node/esm src/index.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.27.0",
     "@types/dotenv": "^8.2.3",
     "@types/express": "^5.0.2",
     "@types/node": "^22.15.21",
+    "@types/terminal-kit": "^2.5.7",
     "eslint": "^9.27.0",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "globals": "^16.1.0",
@@ -24,6 +25,7 @@
   },
   "dependencies": {
     "dotenv": "^16.5.0",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "terminal-kit": "^3.1.2"
   }
 }
