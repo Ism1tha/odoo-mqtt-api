@@ -23,12 +23,6 @@ export const terminal = () => {
     writeLine(color, msg);
   };
 
-  const debug = (msg: string) => {
-    if (process.env.DEBUG_MODE === 'true') {
-      messageWithTag(msg, 'DEBUG', ConsoleColors.DEFAULT, ConsoleColors.TAG_DEBUG);
-    }
-  };
-
   const info = (msg: string) => {
     messageWithTag(msg, 'INFO', ConsoleColors.DEFAULT, ConsoleColors.TAG_INFO);
   };
@@ -49,5 +43,5 @@ export const terminal = () => {
     term.clear();
   };
 
-  return { message, messageWithTag, debug, info, warn, error, engine, clear };
+  return { message, messageWithTag, info, warn, error, engine, clear };
 };

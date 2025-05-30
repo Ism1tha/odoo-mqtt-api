@@ -6,6 +6,5 @@ export enum ConsoleColors {
   TAG_SUCCESS = '#98fb98',
   TAG_ERROR = '#ff6b6b',
   TAG_WARN = '#ffd700',
-  TAG_DEBUG = '#dda0dd',
   TAG_ENGINE = '#ffa500',
 }
