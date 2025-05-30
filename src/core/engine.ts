@@ -18,13 +18,11 @@ const simulationRobots: SimulationRobot[] = [];
 const robots: Robot[] = [];
 const tasks: Task[] = [];
 
-// --- Environment Setup ---
 const BIND_PORT = parsePort(process.env.BIND_PORT, 3000);
 const SIMULATE_ROBOTS = process.env.SIMULATE_MQTT_ROBOTS === 'true';
 const ROBOT1_PORT = parsePort(process.env.SIMULATE_MQTT_ROBOT1_BIND_PORT, 3001);
 const ROBOT2_PORT = parsePort(process.env.SIMULATE_MQTT_ROBOT2_BIND_PORT, 3002);
 
-// --- Robot Setup ---
 const setupSimulationRobots = async (): Promise<void> => {
   if (!SIMULATE_ROBOTS) return;
 
@@ -42,7 +40,6 @@ const setupSimulationRobots = async (): Promise<void> => {
   }
 };
 
-// --- Engine Startup ---
 export const startEngine = async (): Promise<void> => {
   try {
     await setupDatabase();
@@ -74,7 +71,6 @@ export const startEngine = async (): Promise<void> => {
   }
 };
 
-// --- Graceful Shutdown ---
 const shutdownEngine = (): void => {
   try {
     clear();
@@ -87,13 +83,11 @@ const shutdownEngine = (): void => {
   }
 };
 
-// --- Clear Queue Function ---
 export const clearQueue = (): void => {
   tasks.length = 0;
   engine('Tasks queue cleared.');
 };
 
-// --- Check current Queue ---
 export const checkQueue = (): void => {
   engine(`Checking current queue... ${tasks.length} tasks in queue.`);
 };
