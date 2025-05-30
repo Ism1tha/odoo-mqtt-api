@@ -1,9 +1,7 @@
-import { addRobot, deleteRobot, getAllRobots } from '../robots/robot.js';
-import { Robot, RobotStatus } from '../robots/robot.types.js';
+import { addRobot, deleteRobot, getAllRobots } from '../domain/robot.entity.js';
+import { Robot, RobotStatus } from '../domain/robot.types.js';
 
-export async function syncRobotsService(
-  robots: Array<Robot & { status: RobotStatus }>
-): Promise<void> {
+export async function syncRobots(robots: Array<Robot & { status: RobotStatus }>): Promise<void> {
   if (!Array.isArray(robots)) {
     throw new Error('Invalid robots array');
   }

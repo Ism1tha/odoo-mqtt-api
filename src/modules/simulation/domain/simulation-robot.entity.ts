@@ -1,11 +1,11 @@
 import express from 'express';
 
-import terminal from '../utils/terminal.js';
+import { terminal } from '../../../utils/terminal.js';
 import { SimulationRobotStatus } from './simulation-robot.types.js';
 
-const { info } = terminal;
+const { info } = terminal();
 
-class SimulationRobot {
+export class SimulationRobot {
   private app: express.Application;
   private status: SimulationRobotStatus;
   private port: number;
@@ -74,5 +74,3 @@ class SimulationRobot {
     return this.port;
   }
 }
-
-export default SimulationRobot;

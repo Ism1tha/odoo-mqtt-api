@@ -1,4 +1,4 @@
-import { getDb } from '../database.js';
+import { getDb } from '../../../core/database.js';
 import { Robot, RobotStatus } from './robot.types.js';
 
 export async function addRobot(robot: Robot & { status: RobotStatus }): Promise<void> {

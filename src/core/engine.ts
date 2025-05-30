@@ -1,16 +1,16 @@
 import express from 'express';
 
+import { SimulationRobot } from '../modules/simulation/index.js';
+import { parsePort } from '../utils/extra.js';
+import { terminal } from '../utils/terminal.js';
 import { setupDatabase } from './database.js';
-import routes from './routes.js';
-import SimulationRobot from './simulation-robots/simulation-robot.js';
-import { parsePort } from './utils/extra.js';
-import terminal from './utils/terminal.js';
+import { apiRouter } from './routes.js';
 
-const { clear, error, engine } = terminal;
+const { clear, error, engine } = terminal();
 
 const app = express();
 app.use(express.json());
-app.use('/api', routes);
+app.use('/api', apiRouter);
 
 const robots: SimulationRobot[] = [];
 

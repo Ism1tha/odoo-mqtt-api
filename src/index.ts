@@ -1,10 +1,10 @@
 import 'dotenv/config';
 
-import { startEngine } from './engine.js';
+import { startEngine } from './core/engine.js';
 import { ConsoleColors } from './utils/colors.js';
-import terminal from './utils/terminal.js';
+import { terminal } from './utils/terminal.js';
 
-const { message, clear } = terminal;
+const { message, clear } = terminal();
 
 clear();
 message('Odoo MQTT API - Press Ctrl+C to exit', ConsoleColors.GREEN);

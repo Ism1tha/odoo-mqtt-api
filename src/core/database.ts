@@ -1,9 +1,9 @@
 import { Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
-import terminal from './utils/terminal.js';
+import { terminal } from '../utils/terminal.js';
 
-const { info } = terminal;
+const { info } = terminal();
 
 let db: Database | null = null;
 

@@ -8,7 +8,7 @@ const writeLine = (color: string, msg: string) => {
   term.colorRgbHex(color)(msg + '\n');
 };
 
-const terminal = () => {
+export const terminal = () => {
   const message = (msg: string, color = ConsoleColors.DEFAULT) => {
     writeLine(color, msg);
   };
@@ -51,5 +51,3 @@ const terminal = () => {
 
   return { message, messageWithTag, debug, info, warn, error, engine, clear };
 };
-
-export default terminal();
