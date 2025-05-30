@@ -25,8 +25,8 @@ const setupRobots = async (): Promise<void> => {
   if (!SIMULATE_ROBOTS) return;
 
   try {
-    const robot1 = new SimulationRobot('robot1', ROBOT1_PORT);
-    const robot2 = new SimulationRobot('robot2', ROBOT2_PORT);
+    const robot1 = new SimulationRobot('1', 'robot1', 'robot1/topic', ROBOT1_PORT);
+    const robot2 = new SimulationRobot('2', 'robot2', 'robot2/topic', ROBOT2_PORT);
 
     robot1.start();
     robot2.start();

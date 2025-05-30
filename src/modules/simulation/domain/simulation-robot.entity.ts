@@ -6,16 +6,23 @@ import { SimulationRobotStatus } from './simulation-robot.types.js';
 const { info } = terminal();
 
 export class SimulationRobot {
-  private app: express.Application;
+  private id: string;
+  private name: string;
+  private topic: string;
   private status: SimulationRobotStatus;
-  private port: number;
-  private robotId: string;
 
-  constructor(robotId: string, port: number) {
-    this.app = express();
+  private app: express.Application;
+  private port: number;
+
+  constructor(id: string, name: string, topic: string, port: number) {
+    this.id = id;
+    this.name = name;
+    this.topic = topic;
     this.status = SimulationRobotStatus.IDLE;
+
+    this.app = express();
     this.port = port;
-    this.robotId = robotId;
+
     this.setupRoutes();
   }
 
@@ -24,50 +31,60 @@ export class SimulationRobot {
 
     this.app.post('/start', (req, res) => {
       this.status = SimulationRobotStatus.RUNNING;
-      info(`Robot ${this.robotId} started`);
+      info(`Robot ${this.id} started`);
       res.json({
-        message: `Robot ${this.robotId} started`,
+        message: `Robot ${this.id} started`,
         status: this.status,
-        robotId: this.robotId,
+        id: this.id,
       });
     });
 
     this.app.post('/stop', (req, res) => {
       this.status = SimulationRobotStatus.IDLE;
-      info(`Robot ${this.robotId} stopped`);
+      info(`Robot ${this.id} stopped`);
       res.json({
-        message: `Robot ${this.robotId} stopped`,
+        message: `Robot ${this.id} stopped`,
         status: this.status,
-        robotId: this.robotId,
+        id: this.id,
       });
     });
 
     this.app.get('/status', (req, res) => {
       res.json({
         status: this.status,
-        robotId: this.robotId,
+        id: this.id,
+        name: this.name,
+        topic: this.topic,
       });
     });
   }
 
   public start(): void {
     this.app.listen(this.port, () => {
-      info(`Robot ${this.robotId} is running on port ${this.port}`);
+      info(`Robot ${this.id} is running on port ${this.port}`);
     });
     this.status = SimulationRobotStatus.RUNNING;
   }
 
   public stop(): void {
     this.status = SimulationRobotStatus.IDLE;
-    info(`Robot ${this.robotId} stopped`);
+    info(`Robot ${this.id} stopped`);
   }
 
   public getStatus(): SimulationRobotStatus {
     return this.status;
   }
 
-  public getRobotId(): string {
-    return this.robotId;
+  public getId(): string {
+    return this.id;
+  }
+
+  public getName(): string {
+    return this.name;
+  }
+
+  public getTopic(): string {
+    return this.topic;
   }
 
   public getPort(): number {
