@@ -39,9 +39,13 @@ export const terminal = () => {
     messageWithTag(msg, 'ENGINE', ConsoleColors.DEFAULT, ConsoleColors.TAG_SUCCESS);
   };
 
+  const mqtt = (msg: string) => {
+    messageWithTag(msg, 'MQTT', ConsoleColors.DEFAULT, ConsoleColors.TAG_MQTT);
+  };
+
   const clear = () => {
     term.clear();
   };
 
-  return { message, messageWithTag, info, warn, error, engine, clear };
+  return { message, messageWithTag, info, warn, error, engine, mqtt, clear };
 };

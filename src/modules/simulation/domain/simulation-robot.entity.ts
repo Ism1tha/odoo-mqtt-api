@@ -3,7 +3,7 @@ import express from 'express';
 import { terminal } from '../../../utils/terminal.js';
 import { SimulationRobotStatus } from './simulation-robot.types.js';
 
-const { info } = terminal();
+const { info, mqtt } = terminal();
 
 export class SimulationRobot {
   private id: string;
@@ -94,7 +94,7 @@ export class SimulationRobot {
   }
 
   public sendCurrentState(): void {
-    info(`Sending to MQTT the current state for robot ${this.id}`);
+    mqtt(`Sending to MQTT the current state for robot ${this.id}`);
     // TODO: Implement MQTT publish logic here
   }
 }
