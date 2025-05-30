@@ -1,11 +1,11 @@
-import { addRobot, deleteRobot, getAllRobots } from '../domain/robot.entity.js';
-import { Robot, RobotStatus } from '../domain/robot.types.js';
+import { clearQueue } from '../../../core/engine.js';
+import { addRobot, clearAllRobots } from '../domain/robot.entity.js';
+import { Robot } from '../domain/robot.types.js';
 
-export async function syncRobots(robots: Array<Robot & { status: RobotStatus }>): Promise<void> {
-  if (!Array.isArray(robots)) {
-    throw new Error('Invalid robots array');
+export const syncRobots = async (robots: Array<Robot>): Promise<void> => {
+  await clearAllRobots();
+  for (const robot of robots) {
+    await addRobot(robot);
   }
-  const existing = await getAllRobots();
-  await Promise.all(existing.map((r) => deleteRobot(r.id)));
-  await Promise.all(robots.map((robot) => addRobot(robot)));
-}
+  clearQueue();
+};

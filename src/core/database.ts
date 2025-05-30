@@ -7,7 +7,7 @@ const { info } = terminal();
 
 let db: Database | null = null;
 
-export async function setupDatabase(dbPath = './data.sqlite'): Promise<void> {
+export const setupDatabase = async (dbPath = './data.sqlite'): Promise<void> => {
   info(`Initializing database at ${dbPath}`);
   if (db) return;
   db = await open({
@@ -20,19 +20,19 @@ export async function setupDatabase(dbPath = './data.sqlite'): Promise<void> {
     name TEXT NOT NULL,
     topic TEXT NOT NULL
   )`);
-}
+};
 
-export function getDb(): Database {
+export const getDb = (): Database => {
   if (!db) throw new Error('Database not initialized. Call setupDatabase first.');
   return db;
-}
+};
 
-export async function query(sql: string, params: unknown[] = []): Promise<unknown[]> {
+export const query = async (sql: string, params: unknown[] = []): Promise<unknown[]> => {
   if (!db) throw new Error('Database not initialized. Call setupDatabase first.');
   return db.all(sql, params);
-}
+};
 
-export async function run(sql: string, params: unknown[] = []): Promise<void> {
+export const run = async (sql: string, params: unknown[] = []): Promise<void> => {
   if (!db) throw new Error('Database not initialized. Call setupDatabase first.');
   await db.run(sql, params);
-}
+};

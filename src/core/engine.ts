@@ -1,5 +1,7 @@
 import express from 'express';
 
+import { getAllRobots } from '../modules/robot/domain/robot.entity.js';
+import { Robot, RobotStatus, Task } from '../modules/robot/domain/robot.types.js';
 import { SimulationRobot } from '../modules/simulation/index.js';
 import { parsePort } from '../utils/extra.js';
 import { terminal } from '../utils/terminal.js';
@@ -12,7 +14,9 @@ const app = express();
 app.use(express.json());
 app.use('/api', apiRouter);
 
-const robots: SimulationRobot[] = [];
+const simulationRobots: SimulationRobot[] = [];
+const robots: Robot[] = [];
+const tasks: Task[] = [];
 
 // --- Environment Setup ---
 const BIND_PORT = parsePort(process.env.BIND_PORT, 3000);
@@ -21,7 +25,7 @@ const ROBOT1_PORT = parsePort(process.env.SIMULATE_MQTT_ROBOT1_BIND_PORT, 3001);
 const ROBOT2_PORT = parsePort(process.env.SIMULATE_MQTT_ROBOT2_BIND_PORT, 3002);
 
 // --- Robot Setup ---
-const setupRobots = async (): Promise<void> => {
+const setupSimulationRobots = async (): Promise<void> => {
   if (!SIMULATE_ROBOTS) return;
 
   try {
@@ -31,7 +35,7 @@ const setupRobots = async (): Promise<void> => {
     robot1.start();
     robot2.start();
 
-    robots.push(robot1, robot2);
+    simulationRobots.push(robot1, robot2);
   } catch (err) {
     error('Error setting up simulation robots.');
     throw err;
@@ -42,10 +46,25 @@ const setupRobots = async (): Promise<void> => {
 export const startEngine = async (): Promise<void> => {
   try {
     await setupDatabase();
-    await setupRobots();
+    await setupSimulationRobots();
+
+    const dbRobots = await getAllRobots();
+    dbRobots.forEach((robot) => {
+      robots.push({
+        id: robot.id,
+        name: robot.name,
+        topic: robot.topic,
+        status: RobotStatus.UNKNOWN,
+      });
+    });
+
+    engine(`Total robots in system: ${robots.length}`);
+
     app.listen(BIND_PORT, () => {
       engine(`Engine is running on port ${BIND_PORT} and waiting for instructions...`);
     });
+
+    setInterval(checkQueue, 30000);
 
     process.on('SIGINT', () => shutdownEngine());
   } catch (err: unknown) {
@@ -66,4 +85,15 @@ const shutdownEngine = (): void => {
     error(`Failed to stop engine: ${message}`);
     process.exit(1);
   }
+};
+
+// --- Clear Queue Function ---
+export const clearQueue = (): void => {
+  tasks.length = 0;
+  engine('Tasks queue cleared.');
+};
+
+// --- Check current Queue ---
+export const checkQueue = (): void => {
+  engine(`Checking current queue... ${tasks.length} tasks in queue.`);
 };
