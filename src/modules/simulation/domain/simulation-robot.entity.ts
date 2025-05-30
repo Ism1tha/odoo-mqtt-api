@@ -10,6 +10,7 @@ export class SimulationRobot {
   private name: string;
   private topic: string;
   private status: SimulationRobotStatus;
+  private interval: NodeJS.Timeout | null = null;
 
   private app: express.Application;
   private port: number;
@@ -64,6 +65,7 @@ export class SimulationRobot {
       info(`Robot ${this.id} is running on port ${this.port}`);
     });
     this.status = SimulationRobotStatus.RUNNING;
+    this.interval = setInterval(this.sendCurrentState.bind(this), 5000);
   }
 
   public stop(): void {
@@ -89,5 +91,10 @@ export class SimulationRobot {
 
   public getPort(): number {
     return this.port;
+  }
+
+  public sendCurrentState(): void {
+    info(`Sending to MQTT the current state for robot ${this.id}`);
+    // TODO: Implement MQTT publish logic here
   }
 }
