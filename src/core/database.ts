@@ -18,8 +18,7 @@ export async function setupDatabase(dbPath = './data.sqlite'): Promise<void> {
   await db.exec(`CREATE TABLE IF NOT EXISTS robots (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    topic TEXT NOT NULL,
-    status TEXT NOT NULL
+    topic TEXT NOT NULL
   )`);
 }
 
