@@ -26,6 +26,7 @@
   "dependencies": {
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "mqtt": "^5.13.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "terminal-kit": "^3.1.2"
