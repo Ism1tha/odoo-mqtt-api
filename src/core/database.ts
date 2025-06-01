@@ -3,12 +3,12 @@ import sqlite3 from 'sqlite3';
 
 import { terminal } from '../utils/terminal.js';
 
-const { info } = terminal();
+const { infoMessage } = terminal();
 
 let db: Database | null = null;
 
 export const setupDatabase = async (dbPath = './data.sqlite'): Promise<void> => {
-  info(`Initializing database at ${dbPath}`);
+  infoMessage(`Initializing database at ${dbPath}`);
   if (db) return;
   db = await open({
     filename: dbPath,

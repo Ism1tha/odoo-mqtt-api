@@ -3,7 +3,7 @@ import express from 'express';
 import { terminal } from '../../../utils/terminal.js';
 import { SimulationRobotStatus } from './simulation-robot.types.js';
 
-const { info, mqtt } = terminal();
+const { infoMessage, mqttMessage } = terminal();
 
 export class SimulationRobot {
   private id: string;
@@ -32,7 +32,7 @@ export class SimulationRobot {
 
     this.app.post('/start', (req, res) => {
       this.status = SimulationRobotStatus.RUNNING;
-      info(`Robot ${this.id} started`);
+      infoMessage(`Robot ${this.id} started`);
       res.json({
         message: `Robot ${this.id} started`,
         status: this.status,
@@ -42,7 +42,7 @@ export class SimulationRobot {
 
     this.app.post('/stop', (req, res) => {
       this.status = SimulationRobotStatus.IDLE;
-      info(`Robot ${this.id} stopped`);
+      infoMessage(`Robot ${this.id} stopped`);
       res.json({
         message: `Robot ${this.id} stopped`,
         status: this.status,
@@ -62,7 +62,7 @@ export class SimulationRobot {
 
   public start(): void {
     this.app.listen(this.port, () => {
-      info(`Robot ${this.id} is running on port ${this.port}`);
+      infoMessage(`Robot ${this.id} is running on port ${this.port}`);
     });
     this.status = SimulationRobotStatus.RUNNING;
     this.interval = setInterval(this.sendCurrentState.bind(this), 5000);
@@ -70,7 +70,7 @@ export class SimulationRobot {
 
   public stop(): void {
     this.status = SimulationRobotStatus.IDLE;
-    info(`Robot ${this.id} stopped`);
+    infoMessage(`Robot ${this.id} stopped`);
   }
 
   public getStatus(): SimulationRobotStatus {
@@ -94,7 +94,7 @@ export class SimulationRobot {
   }
 
   public sendCurrentState(): void {
-    mqtt(`Sending to MQTT the current state for robot ${this.id}`);
+    mqttMessage(`Sending to MQTT the current state for robot ${this.id}`);
     // TODO: Implement MQTT publish logic here
   }
 }

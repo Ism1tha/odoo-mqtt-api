@@ -8,6 +8,12 @@ const writeLine = (color: string, msg: string) => {
   term.colorRgbHex(color)(msg + '\n');
 };
 
+const getCurrentTimeTag = (): string => {
+  const now = new Date();
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `[${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}]`;
+};
+
 export const terminal = () => {
   const message = (msg: string, color = ConsoleColors.DEFAULT) => {
     writeLine(color, msg);
@@ -19,27 +25,29 @@ export const terminal = () => {
     color = ConsoleColors.DEFAULT,
     tagColor = ConsoleColors.TAG_SUCCESS
   ) => {
-    term.colorRgbHex(tagColor, `[${tag}] `);
+    const timeTag = getCurrentTimeTag();
+    term.colorRgbHex(ConsoleColors.DEFAULT)(timeTag + ' ');
+    term.colorRgbHex(tagColor)(`[${tag}] `);
     writeLine(color, msg);
   };
 
-  const info = (msg: string) => {
+  const infoMessage = (msg: string) => {
     messageWithTag(msg, 'INFO', ConsoleColors.DEFAULT, ConsoleColors.TAG_INFO);
   };
 
-  const warn = (msg: string) => {
+  const warnMessage = (msg: string) => {
     messageWithTag(msg, 'WARN', ConsoleColors.YELLOW, ConsoleColors.TAG_WARN);
   };
 
-  const error = (msg: string) => {
-    messageWithTag(msg, 'ERROR', ConsoleColors.TAG_ERROR, ConsoleColors.TAG_ERROR);
+  const errorMessage = (msg: string) => {
+    messageWithTag(msg, 'ERROR', ConsoleColors.DEFAULT, ConsoleColors.TAG_ERROR);
   };
 
-  const engine = (msg: string) => {
+  const engineMessage = (msg: string) => {
     messageWithTag(msg, 'ENGINE', ConsoleColors.DEFAULT, ConsoleColors.TAG_SUCCESS);
   };
 
-  const mqtt = (msg: string) => {
+  const mqttMessage = (msg: string) => {
     messageWithTag(msg, 'MQTT', ConsoleColors.DEFAULT, ConsoleColors.TAG_MQTT);
   };
 
@@ -47,5 +55,14 @@ export const terminal = () => {
     term.clear();
   };
 
-  return { message, messageWithTag, info, warn, error, engine, mqtt, clear };
+  return {
+    message,
+    messageWithTag,
+    infoMessage,
+    warnMessage,
+    errorMessage,
+    engineMessage,
+    mqttMessage,
+    clear,
+  };
 };

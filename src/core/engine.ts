@@ -6,9 +6,10 @@ import { SimulationRobot } from '../modules/simulation/index.js';
 import { parsePort } from '../utils/extra.js';
 import { terminal } from '../utils/terminal.js';
 import { setupDatabase } from './database.js';
+import { connectMQTT, getMQTTClientStatus, MQTTClientStatus } from './mqtt.js';
 import { apiRouter } from './routes.js';
 
-const { clear, error, engine } = terminal();
+const { clear, errorMessage, engineMessage, infoMessage } = terminal();
 
 const app = express();
 app.use(express.json());
@@ -35,7 +36,7 @@ const setupSimulationRobots = async (): Promise<void> => {
 
     simulationRobots.push(robot1, robot2);
   } catch (err) {
-    error('Error setting up simulation robots.');
+    errorMessage('Error setting up simulation robots.');
     throw err;
   }
 };
@@ -55,18 +56,20 @@ export const startEngine = async (): Promise<void> => {
       });
     });
 
-    engine(`Total robots in system: ${robots.length}`);
+    engineMessage(`Total robots in system: ${robots.length}`);
 
     app.listen(BIND_PORT, () => {
-      engine(`Engine is running on port ${BIND_PORT} and waiting for instructions...`);
+      engineMessage(`Engine is running on port ${BIND_PORT} and waiting for instructions...`);
     });
 
-    setInterval(checkQueue, 30000);
+    setInterval(checkQueue, 20000);
+
+    connectMQTT();
 
     process.on('SIGINT', () => shutdownEngine());
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    error(`Failed to start engine: ${message}`);
+    errorMessage(`Failed running engine, exiting... ${message}`);
     process.exit(1);
   }
 };
@@ -74,20 +77,23 @@ export const startEngine = async (): Promise<void> => {
 const shutdownEngine = (): void => {
   try {
     clear();
-    engine('Received SIGINT. Shutting down gracefully...');
+    engineMessage('Received SIGINT. Shutting down gracefully...');
     setTimeout(() => process.exit(0), 100);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    error(`Failed to stop engine: ${message}`);
+    errorMessage(`Failed to stop engine: ${message}`);
     process.exit(1);
   }
 };
 
 export const clearQueue = (): void => {
   tasks.length = 0;
-  engine('Tasks queue cleared.');
+  infoMessage('Tasks queue cleared.');
 };
 
-export const checkQueue = (): void => {
-  engine(`Checking current queue... ${tasks.length} tasks in queue.`);
+const checkQueue = (): void => {
+  if (getMQTTClientStatus() !== MQTTClientStatus.CONNECTED) {
+    errorMessage('MQTT client is not connected. Skipping queue check.');
+    return;
+  }
 };
