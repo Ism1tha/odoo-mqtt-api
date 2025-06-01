@@ -11,10 +11,6 @@ import { apiRouter } from './routes.js';
 
 const { clear, errorMessage, engineMessage, infoMessage } = terminal();
 
-const app = express();
-app.use(express.json());
-app.use('/api', apiRouter);
-
 const simulationRobots: SimulationRobot[] = [];
 const robots: Robot[] = [];
 const tasks: Task[] = [];
@@ -23,6 +19,34 @@ const BIND_PORT = parsePort(process.env.BIND_PORT, 3000);
 const SIMULATE_ROBOTS = process.env.SIMULATE_MQTT_ROBOTS === 'true';
 const ROBOT1_PORT = parsePort(process.env.SIMULATE_MQTT_ROBOT1_BIND_PORT, 3001);
 const ROBOT2_PORT = parsePort(process.env.SIMULATE_MQTT_ROBOT2_BIND_PORT, 3002);
+
+const AUTHENTICATION_ENABLED = process.env.AUTHENTICATION_ENABLED === 'true';
+const AUTHENTICATION_PASSWORD = process.env.AUTHENTICATION_PASSWORD;
+
+const authMiddleware = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+): void => {
+  if (!AUTHENTICATION_ENABLED) {
+    next();
+    return;
+  }
+
+  const authHeader = req.headers.authorization;
+  const providedPassword = authHeader?.replace('Bearer ', '');
+
+  if (!providedPassword || providedPassword !== AUTHENTICATION_PASSWORD) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  next();
+};
+
+const app = express();
+app.use(express.json());
+app.use('/api', authMiddleware, apiRouter);
 
 const setupSimulationRobots = async (): Promise<void> => {
   if (!SIMULATE_ROBOTS) return;
