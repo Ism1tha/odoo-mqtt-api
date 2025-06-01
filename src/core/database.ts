@@ -15,10 +15,19 @@ export const setupDatabase = async (dbPath = './data.sqlite'): Promise<void> => 
     driver: sqlite3.Database,
   });
 
-  await db.exec(`CREATE TABLE IF NOT EXISTS robots (
+  await db.exec(`CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    topic TEXT NOT NULL
+    odoo_production_id TEXT NOT NULL,
+    mqtt_topic TEXT NOT NULL,
+    binary_payload TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    priority TEXT NOT NULL DEFAULT 'normal',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    processed_at TEXT,
+    completed_at TEXT,
+    error TEXT,
+    metadata TEXT
   )`);
 };
 

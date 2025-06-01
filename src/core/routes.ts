@@ -1,7 +1,7 @@
 import express from 'express';
 
-import { robotRouter } from '../modules/robot/index.js';
+import { taskRouter } from '../modules/task/index.js';
 
 export const apiRouter: express.Router = express.Router();
 
-apiRouter.use('/robots', robotRouter);
+apiRouter.use('/tasks', taskRouter);

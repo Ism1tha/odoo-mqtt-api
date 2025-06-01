@@ -66,3 +66,57 @@ export const disconnectMQTT = (): void => {
 export const getMQTTClientStatus = (): MQTTClientStatus => {
   return clientStatus;
 };
+
+export const getMQTTClient = (): mqtt.MqttClient | null => {
+  return clientStatus === MQTTClientStatus.CONNECTED ? client : null;
+};
+
+export const publishMessage = async (topic: string, message: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if (clientStatus !== MQTTClientStatus.CONNECTED) {
+      reject(new Error('MQTT client is not connected'));
+      return;
+    }
+
+    client.publish(topic, message, (error) => {
+      if (error) {
+        reject(error);
+      } else {
+        mqttMessage(`Published message to topic ${topic}: ${message}`);
+        resolve();
+      }
+    });
+  });
+};
+
+export const subscribeToTopic = (topic: string, callback: (message: string) => void): void => {
+  if (clientStatus !== MQTTClientStatus.CONNECTED) {
+    throw new Error('MQTT client is not connected');
+  }
+
+  client.subscribe(topic, (error) => {
+    if (error) {
+      throw error;
+    }
+    mqttMessage(`Subscribed to topic: ${topic}`);
+  });
+
+  client.on('message', (receivedTopic, message) => {
+    if (receivedTopic === topic) {
+      callback(message.toString());
+    }
+  });
+};
+
+export const unsubscribeFromTopic = (topic: string): void => {
+  if (clientStatus !== MQTTClientStatus.CONNECTED) {
+    throw new Error('MQTT client is not connected');
+  }
+
+  client.unsubscribe(topic, (error) => {
+    if (error) {
+      throw error;
+    }
+    mqttMessage(`Unsubscribed from topic: ${topic}`);
+  });
+};

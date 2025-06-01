@@ -1,8 +1,7 @@
 import express from 'express';
 
-import { getAllRobots } from '../modules/robot/domain/robot.entity.js';
-import { Robot, RobotStatus, Task } from '../modules/robot/domain/robot.types.js';
 import { SimulationRobot } from '../modules/simulation/index.js';
+import { TaskService } from '../modules/task/index.js';
 import { parsePort } from '../utils/extra.js';
 import { terminal } from '../utils/terminal.js';
 import { setupDatabase } from './database.js';
@@ -12,8 +11,7 @@ import { apiRouter } from './routes.js';
 const { clear, errorMessage, engineMessage, infoMessage } = terminal();
 
 const simulationRobots: SimulationRobot[] = [];
-const robots: Robot[] = [];
-const tasks: Task[] = [];
+const taskService = new TaskService();
 
 const BIND_PORT = parsePort(process.env.BIND_PORT, 3000);
 const SIMULATE_ROBOTS = process.env.SIMULATE_MQTT_ROBOTS === 'true';
@@ -70,17 +68,7 @@ export const startEngine = async (): Promise<void> => {
     await setupDatabase();
     await setupSimulationRobots();
 
-    const dbRobots = await getAllRobots();
-    dbRobots.forEach((robot) => {
-      robots.push({
-        id: robot.id,
-        name: robot.name,
-        topic: robot.topic,
-        status: RobotStatus.UNKNOWN,
-      });
-    });
-
-    engineMessage(`Total robots in system: ${robots.length}`);
+    // TODO: Get pending tasks from the database and add them to the queue
 
     app.listen(BIND_PORT, () => {
       engineMessage(`Engine is running on port ${BIND_PORT} and waiting for instructions...`);
@@ -111,14 +99,24 @@ const shutdownEngine = (): void => {
 };
 
 export const clearQueue = (): void => {
-  tasks.length = 0;
   infoMessage('Tasks queue cleared.');
+  // TODO: Implement actual queue clearing logic - cancel all pending tasks
 };
 
-const checkQueue = (): void => {
+const checkQueue = async (): Promise<void> => {
   if (getMQTTClientStatus() !== MQTTClientStatus.CONNECTED) {
     errorMessage('MQTT client is not connected. Skipping queue check.');
     return;
   }
-  infoMessage(`Checking tasks queue. Current tasks: ${tasks.length}. Robots: ${robots.length}.`);
+
+  try {
+    const nextTask = await taskService.getNextPendingTask();
+    if (nextTask) {
+      infoMessage(`Processing task: ${nextTask.id} for production ${nextTask.odooProductionId}`);
+      await taskService.processTask(nextTask.id);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    errorMessage(`Error processing queue: ${message}`);
+  }
 };
