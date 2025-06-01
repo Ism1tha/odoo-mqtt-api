@@ -12,15 +12,24 @@ export enum MQTTClientStatus {
 
 const { mqttMessage } = terminal();
 
-const MQTT_ADDRESS = process.env.MQTT_ADDRESS || 'localhost';
-const MQTT_PORT = parsePort(process.env.MQTT_PORT, 1883);
+const MQTT_ADDRESS = process.env.MQTT_BRORKER_ADDRESS || 'localhost';
+const MQTT_PORT = parsePort(process.env.MQTT_BRORKER_PORT, 1883);
+const MQTT_USERNAME = process.env.MQTT_BRORKER_USERNAME;
+const MQTT_PASSWORD = process.env.MQTT_BRORKER_PASSWORD;
 
-const client = mqtt.connect(`mqtt://${MQTT_ADDRESS}:${MQTT_PORT}`, {
+const mqttOptions: mqtt.IClientOptions = {
   clientId: 'robot-mqtt-client',
   clean: true,
   connectTimeout: 3000,
   reconnectPeriod: 1000,
-});
+};
+
+if (MQTT_USERNAME && MQTT_PASSWORD) {
+  mqttOptions.username = MQTT_USERNAME;
+  mqttOptions.password = MQTT_PASSWORD;
+}
+
+const client = mqtt.connect(`mqtt://${MQTT_ADDRESS}:${MQTT_PORT}`, mqttOptions);
 
 let clientStatus: MQTTClientStatus = MQTTClientStatus.DISCONNECTED;
 
