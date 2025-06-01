@@ -86,7 +86,7 @@ export const startEngine = async (): Promise<void> => {
       engineMessage(`Engine is running on port ${BIND_PORT} and waiting for instructions...`);
     });
 
-    setInterval(checkQueue, 20000);
+    setInterval(checkQueue, 15000);
 
     connectMQTT();
 
@@ -120,4 +120,5 @@ const checkQueue = (): void => {
     errorMessage('MQTT client is not connected. Skipping queue check.');
     return;
   }
+  infoMessage(`Checking tasks queue. Current tasks: ${tasks.length}. Robots: ${robots.length}.`);
 };

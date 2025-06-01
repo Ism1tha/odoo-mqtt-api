@@ -21,7 +21,7 @@ const mqttOptions: mqtt.IClientOptions = {
   clientId: 'robot-mqtt-client',
   clean: true,
   connectTimeout: 3000,
-  reconnectPeriod: 1000,
+  reconnectPeriod: 10000,
 };
 
 if (MQTT_USERNAME && MQTT_PASSWORD) {
@@ -31,15 +31,19 @@ if (MQTT_USERNAME && MQTT_PASSWORD) {
 
 const client = mqtt.connect(`mqtt://${MQTT_ADDRESS}:${MQTT_PORT}`, mqttOptions);
 
+let isFirstConnection = true;
 let clientStatus: MQTTClientStatus = MQTTClientStatus.DISCONNECTED;
 
 export const connectMQTT = (): void => {
-  client.once('connect', () => {
+  client.on('connect', () => {
+    if (isFirstConnection) {
+      mqttMessage(`Connected to MQTT broker at ${MQTT_ADDRESS}:${MQTT_PORT}`);
+      isFirstConnection = false;
+    }
     clientStatus = MQTTClientStatus.CONNECTED;
-    mqttMessage(`Connected to MQTT broker at ${MQTT_ADDRESS}:${MQTT_PORT}`);
   });
 
-  client.once('error', () => {
+  client.on('error', () => {
     clientStatus = MQTTClientStatus.ERROR;
   });
 
