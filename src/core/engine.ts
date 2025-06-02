@@ -46,6 +46,10 @@ const app = express();
 app.use(express.json());
 app.use('/api', authMiddleware, apiRouter);
 
+/**
+ * Sets up and starts simulation robots if enabled by environment variable.
+ * Simulation robots are used for testing task flows and MQTT integration.
+ */
 export const setupSimulationRobots = async (): Promise<void> => {
   if (!SIMULATE_ROBOTS) {
     infoMessage('Simulation robots are disabled. Set SIMULATE_MQTT_ROBOTS=true to enable.');
@@ -76,6 +80,9 @@ export const setupSimulationRobots = async (): Promise<void> => {
   }
 };
 
+/**
+ * Starts the main engine: database, HTTP server, MQTT, monitoring, and simulation robots.
+ */
 export const startEngine = async (): Promise<void> => {
   try {
     await setupDatabase();
@@ -104,6 +111,9 @@ export const startEngine = async (): Promise<void> => {
   }
 };
 
+/**
+ * Gracefully shuts down the engine, stopping all services and robots.
+ */
 const shutdownEngine = (): void => {
   try {
     clear();
@@ -127,6 +137,9 @@ const shutdownEngine = (): void => {
   }
 };
 
+/**
+ * Checks the task queue and processes the next pending task if available.
+ */
 const checkQueue = async (): Promise<void> => {
   if (getMQTTClientStatus() !== MQTTClientStatus.CONNECTED) {
     errorMessage('MQTT client is not connected. Skipping queue check.');

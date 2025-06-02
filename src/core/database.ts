@@ -7,6 +7,10 @@ const { infoMessage } = terminal();
 
 let db: Database | null = null;
 
+/**
+ * Initializes the SQLite database and creates the tasks table if it does not exist.
+ * @param dbPath Path to the SQLite database file (default: './data.sqlite')
+ */
 export const setupDatabase = async (dbPath = './data.sqlite'): Promise<void> => {
   infoMessage(`Initializing database at ${dbPath}`);
   if (db) return;
@@ -27,16 +31,32 @@ export const setupDatabase = async (dbPath = './data.sqlite'): Promise<void> => 
   )`);
 };
 
+/**
+ * Get the current database instance.
+ * @returns Database instance
+ * @throws Error if database is not initialized
+ */
 export const getDb = (): Database => {
   if (!db) throw new Error('Database not initialized. Call setupDatabase first.');
   return db;
 };
 
+/**
+ * Execute a SQL query and return all results.
+ * @param sql SQL query string
+ * @param params Query parameters
+ * @returns Array of result rows
+ */
 export const query = async (sql: string, params: unknown[] = []): Promise<unknown[]> => {
   if (!db) throw new Error('Database not initialized. Call setupDatabase first.');
   return db.all(sql, params);
 };
 
+/**
+ * Execute a SQL statement (INSERT, UPDATE, DELETE).
+ * @param sql SQL statement string
+ * @param params Statement parameters
+ */
 export const run = async (sql: string, params: unknown[] = []): Promise<void> => {
   if (!db) throw new Error('Database not initialized. Call setupDatabase first.');
   await db.run(sql, params);

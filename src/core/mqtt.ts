@@ -3,6 +3,9 @@ import mqtt from 'mqtt';
 import { parsePort } from '../utils/extra.js';
 import { terminal } from '../utils/terminal.js';
 
+/**
+ * MQTTClientStatus represents the connection state of the MQTT client.
+ */
 export enum MQTTClientStatus {
   CONNECTED = 'CONNECTED',
   DISCONNECTED = 'DISCONNECTED',
@@ -34,6 +37,9 @@ const client = mqtt.connect(`mqtt://${MQTT_ADDRESS}:${MQTT_PORT}`, mqttOptions);
 let clientStatus: MQTTClientStatus = MQTTClientStatus.DISCONNECTED;
 let connectionCallbacks: (() => void)[] = [];
 
+/**
+ * Connect to the MQTT broker and set up event handlers.
+ */
 export const connectMQTT = (): void => {
   client.on('connect', () => {
     clientStatus = MQTTClientStatus.CONNECTED;
@@ -66,6 +72,10 @@ export const connectMQTT = (): void => {
   });
 };
 
+/**
+ * Register a callback to be called when the MQTT client is connected.
+ * @param callback Function to call on connection
+ */
 export const onMQTTConnected = (callback: () => void): void => {
   if (clientStatus === MQTTClientStatus.CONNECTED) {
     callback();
@@ -74,6 +84,9 @@ export const onMQTTConnected = (callback: () => void): void => {
   }
 };
 
+/**
+ * Disconnect from the MQTT broker.
+ */
 export const disconnectMQTT = (): void => {
   if (clientStatus === MQTTClientStatus.CONNECTED || clientStatus === MQTTClientStatus.ERROR) {
     client.end(false, () => {
@@ -85,14 +98,27 @@ export const disconnectMQTT = (): void => {
   }
 };
 
+/**
+ * Get the current status of the MQTT client.
+ * @returns MQTTClientStatus
+ */
 export const getMQTTClientStatus = (): MQTTClientStatus => {
   return clientStatus;
 };
 
+/**
+ * Get the MQTT client instance if connected.
+ * @returns mqtt.MqttClient or null
+ */
 export const getMQTTClient = (): mqtt.MqttClient | null => {
   return clientStatus === MQTTClientStatus.CONNECTED ? client : null;
 };
 
+/**
+ * Publish a message to a given MQTT topic.
+ * @param topic MQTT topic string
+ * @param message Message payload (string)
+ */
 export const publishMessage = async (topic: string, message: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (clientStatus !== MQTTClientStatus.CONNECTED) {
@@ -111,6 +137,11 @@ export const publishMessage = async (topic: string, message: string): Promise<vo
   });
 };
 
+/**
+ * Subscribe to a given MQTT topic and register a callback for incoming messages.
+ * @param topic MQTT topic string
+ * @param callback Function to handle received messages
+ */
 export const subscribeToTopic = (topic: string, callback: (message: string) => void): void => {
   if (clientStatus !== MQTTClientStatus.CONNECTED) {
     throw new Error('MQTT client is not connected');
@@ -130,6 +161,10 @@ export const subscribeToTopic = (topic: string, callback: (message: string) => v
   });
 };
 
+/**
+ * Unsubscribe from a given MQTT topic.
+ * @param topic MQTT topic string
+ */
 export const unsubscribeFromTopic = (topic: string): void => {
   if (clientStatus !== MQTTClientStatus.CONNECTED) {
     throw new Error('MQTT client is not connected');

@@ -14,6 +14,10 @@ const getCurrentTimeTag = (): string => {
   return `[${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}]`;
 };
 
+/**
+ * Provides a set of terminal utilities for colored and tagged output.
+ * Includes info, warning, error, engine, MQTT, and simulation messages.
+ */
 export const terminal = () => {
   const message = (msg: string, color = ConsoleColors.DEFAULT) => {
     writeLine(color, msg);

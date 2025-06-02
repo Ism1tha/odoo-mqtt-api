@@ -3,9 +3,20 @@ import express, { Request, Response } from 'express';
 import { CreateTaskRequest } from '../domain/task.types.js';
 import { TaskService } from '../services/task.service.js';
 
+/**
+ * Express router for task-related API endpoints.
+ * Provides endpoints for creating and managing tasks.
+ */
 export const taskRouter = express.Router();
 const taskService = new TaskService();
 
+/**
+ * POST /tasks
+ * Create a new task.
+ *
+ * Request body: CreateTaskRequest
+ * Response: 201 with created TaskResponse, or 400/500 on error
+ */
 taskRouter.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const taskRequest: CreateTaskRequest = req.body;
