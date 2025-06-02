@@ -219,12 +219,8 @@ export class TaskService {
         if (task && task.status === TaskStatus.PROCESSING) {
           await this.updateTask(completedTaskId, { status: TaskStatus.COMPLETED });
           infoMessage(`Task ${completedTaskId} completed by robot ${robotId}`);
+
           if (odooService) {
-            await odooService.notifyTaskCompletion({
-              taskId: completedTaskId,
-              productionId: task.odooProductionId,
-              status: 'completed',
-            });
             await odooService.updateManufacturingOrderStatus(
               task.odooProductionId,
               'done',
@@ -248,13 +244,8 @@ export class TaskService {
             error: errorDescription,
           });
           infoMessage(`Task ${completedTaskId} failed on robot ${robotId}`);
+
           if (odooService) {
-            await odooService.notifyTaskCompletion({
-              taskId: completedTaskId,
-              productionId: task.odooProductionId,
-              status: 'failed',
-              error: errorDescription,
-            });
             await odooService.updateManufacturingOrderStatus(
               task.odooProductionId,
               'failed',

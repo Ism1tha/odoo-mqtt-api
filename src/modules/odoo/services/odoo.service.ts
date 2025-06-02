@@ -17,20 +17,6 @@ export interface OdooConfig {
   authPassword?: string;
 }
 
-/**
- * TaskCompletionPayload represents the payload sent to Odoo when notifying about task completion.
- */
-export interface TaskCompletionPayload {
-  /** Unique task identifier */
-  taskId: string;
-  /** Odoo manufacturing order/production ID */
-  productionId: string;
-  /** Task completion status */
-  status: 'completed' | 'failed';
-  /** Optional error message if task failed */
-  error?: string;
-}
-
 // Service for interacting with Odoo API endpoints
 /**
  * OdooService provides methods to interact with Odoo API endpoints for task completion
@@ -45,38 +31,6 @@ export class OdooService {
    */
   constructor(config: OdooConfig) {
     this.config = config;
-  }
-
-  /**
-   * Notify Odoo about the completion of a task.
-   * @param payload Task completion payload
-   * @returns True if notification succeeded, false otherwise
-   */
-  async notifyTaskCompletion(payload: TaskCompletionPayload): Promise<boolean> {
-    try {
-      const url = `http://${this.config.host}:${this.config.port}/mqtt-integration/task-completion`;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (this.config.authEnabled && this.config.authPassword) {
-        headers['Authorization'] = `Bearer ${this.config.authPassword}`;
-      }
-      infoMessage(`Notifying Odoo about task completion: ${payload.taskId} (${payload.status})`);
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        errorMessage(`Failed to notify Odoo: ${response.status} - ${errorText}`);
-        return false;
-      }
-      infoMessage(`Successfully notified Odoo about task ${payload.taskId} completion`);
-      return true;
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      errorMessage(`Error notifying Odoo about task completion: ${errorMsg}`);
-      return false;
-    }
   }
 
   /**
