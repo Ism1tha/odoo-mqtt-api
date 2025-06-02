@@ -8,4 +8,5 @@ export enum ConsoleColors {
   TAG_WARN = '#ffd700',
   TAG_ENGINE = '#ffa500',
   TAG_MQTT = '#9370db',
+  TAG_SIMULATION = '#20b2aa',
 }

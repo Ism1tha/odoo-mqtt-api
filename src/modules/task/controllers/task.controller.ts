@@ -31,9 +31,7 @@ taskRouter.get('/', async (req: Request, res: Response) => {
   try {
     const filters: TaskFilters = {
       status: req.query.status as TaskFilters['status'],
-      priority: req.query.priority as TaskFilters['priority'],
       odooProductionId: req.query.odooProductionId as string,
-      mqttTopic: req.query.mqttTopic as string,
     };
 
     Object.keys(filters).forEach((key) => {

@@ -23,11 +23,7 @@ export const setupDatabase = async (dbPath = './data.sqlite'): Promise<void> => 
     status TEXT NOT NULL DEFAULT 'pending',
     priority TEXT NOT NULL DEFAULT 'normal',
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    processed_at TEXT,
-    completed_at TEXT,
-    error TEXT,
-    metadata TEXT
+    error TEXT
   )`);
 };
 

@@ -51,6 +51,10 @@ export const terminal = () => {
     messageWithTag(msg, 'MQTT', ConsoleColors.DEFAULT, ConsoleColors.TAG_MQTT);
   };
 
+  const simulationMessage = (msg: string) => {
+    messageWithTag(msg, 'SIMULATION', ConsoleColors.DEFAULT, ConsoleColors.TAG_SIMULATION);
+  };
+
   const clear = () => {
     term.clear();
   };
@@ -63,6 +67,7 @@ export const terminal = () => {
     errorMessage,
     engineMessage,
     mqttMessage,
+    simulationMessage,
     clear,
   };
 };

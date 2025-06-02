@@ -18,7 +18,6 @@ export interface CreateTaskRequest {
   mqttTopic: string;
   binaryPayload: string;
   priority?: TaskPriority;
-  metadata?: Record<string, unknown>;
 }
 
 export interface TaskResponse {
@@ -29,22 +28,15 @@ export interface TaskResponse {
   status: TaskStatus;
   priority: TaskPriority;
   createdAt: string;
-  updatedAt: string;
-  processedAt?: string;
-  completedAt?: string;
   error?: string;
-  metadata?: Record<string, unknown>;
 }
 
 export interface UpdateTaskRequest {
   status?: TaskStatus;
   error?: string;
-  metadata?: Record<string, unknown>;
 }
 
 export interface TaskFilters {
   status?: TaskStatus;
-  priority?: TaskPriority;
   odooProductionId?: string;
-  mqttTopic?: string;
 }

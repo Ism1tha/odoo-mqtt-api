@@ -1,5 +1,17 @@
 export enum SimulationRobotStatus {
   IDLE = 'IDLE',
-  RUNNING = 'RUNNING',
-  STOPPED = 'STOPPED',
+  PROCESSING = 'PROCESSING',
+  SUCCESS = 'SUCCESS',
+  ERROR = 'ERROR',
+}
+
+export interface TaskMessage {
+  taskId: string;
+  payload: string;
+}
+
+export interface StatusMessage {
+  status: SimulationRobotStatus;
+  timestamp: string;
+  completedTaskId?: string;
 }

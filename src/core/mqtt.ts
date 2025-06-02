@@ -10,7 +10,7 @@ export enum MQTTClientStatus {
   RECONNECTING = 'RECONNECTING',
 }
 
-const { mqttMessage } = terminal();
+const { mqttMessage, errorMessage } = terminal();
 
 const MQTT_ADDRESS = process.env.MQTT_BRORKER_ADDRESS || 'localhost';
 const MQTT_PORT = parsePort(process.env.MQTT_BRORKER_PORT, 1883);
@@ -31,25 +31,47 @@ if (MQTT_USERNAME && MQTT_PASSWORD) {
 
 const client = mqtt.connect(`mqtt://${MQTT_ADDRESS}:${MQTT_PORT}`, mqttOptions);
 
-let isFirstConnection = true;
 let clientStatus: MQTTClientStatus = MQTTClientStatus.DISCONNECTED;
+let connectionCallbacks: (() => void)[] = [];
 
 export const connectMQTT = (): void => {
   client.on('connect', () => {
-    if (isFirstConnection) {
-      mqttMessage(`Connected to MQTT broker at ${MQTT_ADDRESS}:${MQTT_PORT}`);
-      isFirstConnection = false;
-    }
     clientStatus = MQTTClientStatus.CONNECTED;
+    mqttMessage(`Connected to MQTT broker at ${MQTT_ADDRESS}:${MQTT_PORT}`);
+
+    const callbacks = [...connectionCallbacks];
+    connectionCallbacks = [];
+    callbacks.forEach((callback) => {
+      try {
+        callback();
+      } catch (error) {
+        errorMessage(`Error executing connection callback: ${error}`);
+      }
+    });
   });
 
-  client.on('error', () => {
+  client.on('error', (error) => {
     clientStatus = MQTTClientStatus.ERROR;
+    errorMessage(`MQTT connection error: ${error.message}`);
   });
 
   client.on('reconnect', () => {
     clientStatus = MQTTClientStatus.RECONNECTING;
+    mqttMessage('Attempting to reconnect to MQTT broker...');
   });
+
+  client.on('disconnect', () => {
+    clientStatus = MQTTClientStatus.DISCONNECTED;
+    mqttMessage('Disconnected from MQTT broker');
+  });
+};
+
+export const onMQTTConnected = (callback: () => void): void => {
+  if (clientStatus === MQTTClientStatus.CONNECTED) {
+    callback();
+  } else {
+    connectionCallbacks.push(callback);
+  }
 };
 
 export const disconnectMQTT = (): void => {

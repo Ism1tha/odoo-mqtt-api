@@ -22,8 +22,7 @@ export class TaskService {
       request.odooProductionId,
       request.mqttTopic,
       request.binaryPayload,
-      request.priority || TaskPriority.NORMAL,
-      request.metadata
+      request.priority || TaskPriority.NORMAL
     );
 
     await this.saveTask(task);
@@ -35,7 +34,7 @@ export class TaskService {
   async getTasks(filters?: TaskFilters): Promise<TaskResponse[]> {
     let sql = `
       SELECT id, odoo_production_id, mqtt_topic, binary_payload, status, priority,
-             created_at, updated_at, processed_at, completed_at, error, metadata
+             created_at, error
       FROM tasks WHERE 1=1
     `;
     const params: unknown[] = [];
@@ -45,19 +44,9 @@ export class TaskService {
       params.push(filters.status);
     }
 
-    if (filters?.priority) {
-      sql += ' AND priority = ?';
-      params.push(filters.priority);
-    }
-
     if (filters?.odooProductionId) {
       sql += ' AND odoo_production_id = ?';
       params.push(filters.odooProductionId);
-    }
-
-    if (filters?.mqttTopic) {
-      sql += ' AND mqtt_topic = ?';
-      params.push(filters.mqttTopic);
     }
 
     sql += ' ORDER BY priority DESC, created_at ASC';
@@ -70,11 +59,7 @@ export class TaskService {
       status: TaskStatus;
       priority: TaskPriority;
       created_at: string;
-      updated_at: string;
-      processed_at?: string;
-      completed_at?: string;
       error?: string;
-      metadata?: string;
     }>;
 
     return rows.map((row) => ({
@@ -85,11 +70,7 @@ export class TaskService {
       status: row.status,
       priority: row.priority,
       createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      processedAt: row.processed_at,
-      completedAt: row.completed_at,
       error: row.error,
-      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
     }));
   }
 
@@ -104,38 +85,25 @@ export class TaskService {
       return null;
     }
 
-    const updatedAt = new Date().toISOString();
-    let sql = 'UPDATE tasks SET updated_at = ?';
-    const params: unknown[] = [updatedAt];
+    let sql = 'UPDATE tasks SET';
+    const params: unknown[] = [];
+    const setClauses: string[] = [];
 
     if (updates.status !== undefined) {
-      sql += ', status = ?';
+      setClauses.push(' status = ?');
       params.push(updates.status);
-
-      if (updates.status === TaskStatus.PROCESSING) {
-        sql += ', processed_at = ?';
-        params.push(updatedAt);
-      }
-
-      if (updates.status === TaskStatus.COMPLETED || updates.status === TaskStatus.FAILED) {
-        sql += ', completed_at = ?';
-        params.push(updatedAt);
-      }
     }
 
     if (updates.error !== undefined) {
-      sql += ', error = ?';
+      setClauses.push(' error = ?');
       params.push(updates.error);
     }
 
-    if (updates.metadata !== undefined) {
-      const currentMetadata = task.metadata || {};
-      const newMetadata = { ...currentMetadata, ...updates.metadata };
-      sql += ', metadata = ?';
-      params.push(JSON.stringify(newMetadata));
+    if (setClauses.length === 0) {
+      return task;
     }
 
-    sql += ' WHERE id = ?';
+    sql += setClauses.join(',') + ' WHERE id = ?';
     params.push(id);
 
     await run(sql, params);
@@ -202,8 +170,8 @@ export class TaskService {
       `
       INSERT INTO tasks (
         id, odoo_production_id, mqtt_topic, binary_payload, status, priority,
-        created_at, updated_at, metadata
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        created_at, error
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
       [
         task.id,
@@ -213,8 +181,7 @@ export class TaskService {
         task.status,
         task.priority,
         task.createdAt.toISOString(),
-        task.updatedAt.toISOString(),
-        task.metadata ? JSON.stringify(task.metadata) : null,
+        task.error,
       ]
     );
   }
