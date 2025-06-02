@@ -13,6 +13,13 @@ export enum TaskPriority {
   URGENT = 'urgent',
 }
 
+export enum TaskRobotStatus {
+  IDLE = 'IDLE',
+  PROCESSING = 'PROCESSING',
+  SUCCESS = 'SUCCESS',
+  ERROR = 'ERROR',
+}
+
 export interface CreateTaskRequest {
   odooProductionId: string;
   mqttTopic: string;

@@ -146,11 +146,18 @@ export class TaskService {
         return false;
       }
 
-      await publishMessage(task.mqttTopic, task.binaryPayload);
+      const taskMessage = {
+        taskId: task.id,
+        payload: task.binaryPayload,
+      };
 
-      await this.updateTask(taskId, { status: TaskStatus.COMPLETED });
+      const robotTaskTopic = `${task.mqttTopic}/task`;
+      await publishMessage(robotTaskTopic, JSON.stringify(taskMessage));
 
-      infoMessage(`Task processed successfully: ${taskId}`);
+      const robotId = this.extractRobotIdFromTopic(task.mqttTopic);
+
+      infoMessage(`Task ${taskId} sent to robot ${robotId} on topic ${robotTaskTopic}`);
+
       return true;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -163,6 +170,48 @@ export class TaskService {
 
       return false;
     }
+  }
+
+  private extractRobotIdFromTopic(robotTopic: string): string {
+    const parts = robotTopic.split('/');
+    return parts[parts.length - 1] || robotTopic;
+  }
+
+  async handleRobotStatusUpdate(
+    robotId: string,
+    status: string,
+    completedTaskId?: string
+  ): Promise<void> {
+    if (status === 'SUCCESS' && completedTaskId) {
+      try {
+        const task = await this.getTaskById(completedTaskId);
+        if (task && task.status === TaskStatus.PROCESSING) {
+          await this.updateTask(completedTaskId, { status: TaskStatus.COMPLETED });
+          infoMessage(`Task ${completedTaskId} completed by robot ${robotId}`);
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        errorMessage(`Error updating task status from robot ${robotId}: ${errorMsg}`);
+      }
+    } else if (status === 'ERROR' && completedTaskId) {
+      try {
+        const task = await this.getTaskById(completedTaskId);
+        if (task && task.status === TaskStatus.PROCESSING) {
+          await this.updateTask(completedTaskId, {
+            status: TaskStatus.FAILED,
+            error: `Robot ${robotId} reported error during task execution`,
+          });
+          infoMessage(`Task ${completedTaskId} failed on robot ${robotId}`);
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        errorMessage(`Error updating failed task status from robot ${robotId}: ${errorMsg}`);
+      }
+    }
+  }
+
+  async getProcessingTasks(): Promise<TaskResponse[]> {
+    return await this.getTasks({ status: TaskStatus.PROCESSING });
   }
 
   private async saveTask(task: Task): Promise<void> {

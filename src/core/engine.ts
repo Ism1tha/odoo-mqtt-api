@@ -1,7 +1,7 @@
 import express from 'express';
 
 import { SimulationRobot } from '../modules/simulation/index.js';
-import { TaskService } from '../modules/task/index.js';
+import { TaskMonitoringService, TaskService } from '../modules/task/index.js';
 import { parsePort } from '../utils/extra.js';
 import { terminal } from '../utils/terminal.js';
 import { setupDatabase } from './database.js';
@@ -12,6 +12,8 @@ const { clear, errorMessage, engineMessage, infoMessage, simulationMessage } = t
 
 const simulationRobots: SimulationRobot[] = [];
 const taskService = new TaskService();
+
+const taskMonitoringService = TaskMonitoringService.getInstance(taskService);
 
 const BIND_PORT = parsePort(process.env.BIND_PORT, 3000);
 const SIMULATE_ROBOTS = process.env.SIMULATE_MQTT_ROBOTS === 'true';
@@ -56,8 +58,8 @@ export const setupSimulationRobots = async (): Promise<void> => {
   }
 
   try {
-    const robot1 = new SimulationRobot('1', 'robot1', 'robot1/topic');
-    const robot2 = new SimulationRobot('2', 'robot2', 'robot2/topic');
+    const robot1 = new SimulationRobot('1', 'robot1', 'F1/W1/PKG1/0x1');
+    const robot2 = new SimulationRobot('2', 'robot2', 'F1/W1/PKG1/0x2');
 
     robot1.start();
     robot2.start();
@@ -65,6 +67,9 @@ export const setupSimulationRobots = async (): Promise<void> => {
     simulationRobots.push(robot1, robot2);
 
     simulationMessage(`Simulation robots started: ${robot1.getName()}, ${robot2.getName()}`);
+    infoMessage(
+      'Robot monitoring service will automatically discover and monitor these robots when tasks are sent to them'
+    );
   } catch (err) {
     errorMessage('Error setting up simulation robots.');
     throw err;
@@ -84,6 +89,8 @@ export const startEngine = async (): Promise<void> => {
     connectMQTT();
 
     onMQTTConnected(() => {
+      taskMonitoringService.start();
+
       setupSimulationRobots().catch((error) => {
         errorMessage(`Failed to setup simulation robots: ${error}`);
       });
@@ -101,6 +108,8 @@ const shutdownEngine = (): void => {
   try {
     clear();
     engineMessage('Received SIGINT. Shutting down gracefully...');
+
+    taskMonitoringService.stop();
 
     simulationRobots.forEach((robot) => {
       try {
