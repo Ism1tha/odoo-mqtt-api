@@ -1,6 +1,7 @@
 import {
   getMQTTClientStatus,
   MQTTClientStatus,
+  publishMessage,
   subscribeToTopic,
   unsubscribeFromTopic,
 } from '../../../core/mqtt.js';
@@ -112,15 +113,22 @@ export class TaskMonitoringService {
       errorMessage('Cannot subscribe to robot status topics - MQTT client not connected');
       return;
     }
+
     robotTopics.forEach((robotTopic) => {
       const statusTopic = `${robotTopic}/status`;
-      if (this.subscribedTopics.has(statusTopic)) return;
+      const robotId = this.extractRobotIdFromTopic(robotTopic);
+
+      // Skip if already tracking this robot
+      if (this.subscribedTopics.has(statusTopic) || this.robots.has(robotId)) {
+        infoMessage(`Skipping duplicate subscription for robot ${robotId}`);
+        return;
+      }
+
       try {
         subscribeToTopic(statusTopic, (message) => {
           this.handleRobotStatusMessage(robotTopic, message);
         });
         this.subscribedTopics.add(statusTopic);
-        const robotId = this.extractRobotIdFromTopic(robotTopic);
         this.robots.set(robotId, {
           robotId,
           topic: robotTopic,
@@ -137,29 +145,35 @@ export class TaskMonitoringService {
   /**
    * Handle incoming robot status message.
    */
-  private handleRobotStatusMessage(robotTopic: string, message: string): void {
+  private async handleRobotStatusMessage(robotTopic: string, message: string): Promise<void> {
     try {
       const statusData: RobotStatus = JSON.parse(message);
       const { status, completedTaskId, timestamp } = statusData;
+
       if (!status || !timestamp) {
         errorMessage(`Invalid robot status message from ${robotTopic}: missing required fields`);
         return;
       }
+
       const robotId = this.extractRobotIdFromTopic(robotTopic);
       const robotInfo = this.robots.get(robotId);
+
       if (robotInfo) {
         robotInfo.lastSeen = new Date();
         robotInfo.currentStatus = status;
         robotInfo.currentTaskId = completedTaskId;
       }
+
       infoMessage(
         `Robot ${robotId} status: ${status}${completedTaskId ? ` (task: ${completedTaskId})` : ''}`
       );
+
       if (
         (status === TaskRobotStatus.SUCCESS || status === TaskRobotStatus.ERROR) &&
         completedTaskId
       ) {
         this.taskService.handleRobotStatusUpdate(robotId, status, completedTaskId);
+        await this.sendRobotAcknowledgment(robotId, completedTaskId, status);
         this.unsubscribeFromRobotTopic(robotTopic, robotId);
       }
     } catch (error) {
@@ -190,15 +204,20 @@ export class TaskMonitoringService {
     try {
       const processingTasks = await this.taskService.getProcessingTasks();
       if (processingTasks.length === 0) return;
+
       const robotTopics = new Set<string>();
       processingTasks.forEach((task) => {
         const robotTopic = task.mqttTopic.replace(/\/task$/, '');
         robotTopics.add(robotTopic);
       });
+
       if (robotTopics.size > 0) {
-        const newTopics = Array.from(robotTopics).filter(
-          (topic) => !this.subscribedTopics.has(`${topic}/status`)
-        );
+        const newTopics = Array.from(robotTopics).filter((topic) => {
+          const statusTopic = `${topic}/status`;
+          const robotId = this.extractRobotIdFromTopic(topic);
+          return !this.subscribedTopics.has(statusTopic) && !this.robots.has(robotId);
+        });
+
         if (newTopics.length > 0) {
           infoMessage(
             `Discovered ${newTopics.length} new robot(s) from processing tasks: ${newTopics.join(
@@ -276,6 +295,40 @@ export class TaskMonitoringService {
       );
     } catch (error) {
       errorMessage(`Failed to unsubscribe from robot status topic ${statusTopic}: ${error}`);
+    }
+  }
+  /**
+   * Send acknowledgment message to robot after task completion.
+   * @param robotId Robot identifier
+   * @param completedTaskId ID of the completed task
+   * @param status Final status (SUCCESS or ERROR)
+   */
+  private async sendRobotAcknowledgment(
+    robotId: string,
+    completedTaskId: string,
+    status: string
+  ): Promise<void> {
+    try {
+      const robotInfo = this.robots.get(robotId);
+      if (!robotInfo) {
+        errorMessage(`Cannot send acknowledgment: robot ${robotId} not found in registry`);
+        return;
+      }
+
+      const ackTopic = `${robotInfo.topic}/ack`;
+      const acknowledgment = {
+        taskId: completedTaskId,
+        status: status,
+        timestamp: new Date().toISOString(),
+        acknowledged: true,
+      };
+
+      await publishMessage(ackTopic, JSON.stringify(acknowledgment));
+      infoMessage(
+        `Sent acknowledgment to robot ${robotId} for task ${completedTaskId} with status ${status}`
+      );
+    } catch (error) {
+      errorMessage(`Failed to send acknowledgment to robot ${robotId}: ${error}`);
     }
   }
 

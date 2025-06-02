@@ -34,6 +34,8 @@ export class SimulationRobot {
   private isRunning: boolean = false;
   /** ID of the current task being processed */
   private currentTaskId: string | null = null;
+  /** Whether the robot is waiting for task completion acknowledgment */
+  private waitingForAcknowledgment: boolean = false;
 
   constructor(id: string, name: string, topic: string) {
     this.id = id;
@@ -50,6 +52,7 @@ export class SimulationRobot {
     this.isRunning = true;
     simulationMessage(`Robot ${this.id} (${this.name}) started and initializing...`);
     this.subscribeToTaskTopic();
+    this.subscribeToAcknowledgmentTopic();
     this.startStatusUpdates();
   }
 
@@ -74,6 +77,26 @@ export class SimulationRobot {
   }
 
   /**
+   * Subscribe to the robot's acknowledgment topic for task completion confirmations.
+   */
+  private subscribeToAcknowledgmentTopic(): void {
+    if (getMQTTClientStatus() !== MQTTClientStatus.CONNECTED) {
+      errorMessage(
+        `Robot ${this.id}: Cannot subscribe to ${this.topic}/ack - MQTT client not connected`
+      );
+      return;
+    }
+    try {
+      subscribeToTopic(`${this.topic}/ack`, (message) => {
+        this.handleAcknowledgmentMessage(message);
+      });
+      simulationMessage(`Robot ${this.id}: Successfully subscribed to ${this.topic}/ack`);
+    } catch (error) {
+      errorMessage(`Robot ${this.id}: Failed to subscribe to ${this.topic}/ack: ${error}`);
+    }
+  }
+
+  /**
    * Start periodic status updates to the MQTT status topic.
    */
   private startStatusUpdates(): void {
@@ -89,6 +112,7 @@ export class SimulationRobot {
     this.isRunning = false;
     this.status = SimulationRobotStatus.IDLE;
     this.currentTaskId = null;
+    this.waitingForAcknowledgment = false;
     if (this.statusInterval) {
       clearInterval(this.statusInterval);
       this.statusInterval = null;
@@ -115,6 +139,29 @@ export class SimulationRobot {
       simulationMessage(
         `Robot ${this.id} received invalid JSON message: ${message} - Error: ${error}`
       );
+    }
+  }
+
+  /**
+   * Handle acknowledgment message from the task monitoring service.
+   * @param message JSON string representing an acknowledgment
+   */
+  private handleAcknowledgmentMessage(message: string): void {
+    if (!this.waitingForAcknowledgment || !this.currentTaskId) {
+      return;
+    }
+
+    try {
+      const ackData = JSON.parse(message);
+      const { taskId, acknowledged } = ackData;
+
+      if (taskId === this.currentTaskId && acknowledged === true) {
+        simulationMessage(`Robot ${this.id} received acknowledgment for task ${taskId}`);
+        this.waitingForAcknowledgment = false;
+        this.setIdleStatus();
+      }
+    } catch (error) {
+      errorMessage(`Robot ${this.id} received invalid acknowledgment message: ${error}`);
     }
   }
 
@@ -150,9 +197,8 @@ export class SimulationRobot {
     this.setProcessingStatus(taskId, payload);
     setTimeout(() => {
       this.setSuccessStatus(taskId);
-      setTimeout(() => {
-        this.setIdleStatus();
-      }, INTERVALS.TASK_COMPLETION_DELAY);
+      // Wait for acknowledgment instead of automatically returning to IDLE
+      this.waitingForAcknowledgment = true;
     }, INTERVALS.TASK_PROCESSING);
   }
 

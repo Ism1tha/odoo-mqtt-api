@@ -37,6 +37,9 @@ const client = mqtt.connect(`mqtt://${MQTT_ADDRESS}:${MQTT_PORT}`, mqttOptions);
 let clientStatus: MQTTClientStatus = MQTTClientStatus.DISCONNECTED;
 let connectionCallbacks: (() => void)[] = [];
 
+// Track topic subscriptions and their callbacks to prevent duplicates
+const topicCallbacks: Map<string, ((message: string) => void)[]> = new Map();
+
 /**
  * Connect to the MQTT broker and set up event handlers.
  */
@@ -69,6 +72,21 @@ export const connectMQTT = (): void => {
   client.on('disconnect', () => {
     clientStatus = MQTTClientStatus.DISCONNECTED;
     mqttMessage('Disconnected from MQTT broker');
+  });
+
+  // Set up centralized message handler
+  client.on('message', (topic, message) => {
+    const callbacks = topicCallbacks.get(topic);
+    if (callbacks) {
+      const messageStr = message.toString();
+      callbacks.forEach((callback) => {
+        try {
+          callback(messageStr);
+        } catch (error) {
+          errorMessage(`Error in message callback for topic ${topic}: ${error}`);
+        }
+      });
+    }
   });
 };
 
@@ -139,6 +157,7 @@ export const publishMessage = async (topic: string, message: string): Promise<vo
 
 /**
  * Subscribe to a given MQTT topic and register a callback for incoming messages.
+ * Prevents duplicate subscriptions by reusing existing MQTT subscriptions.
  * @param topic MQTT topic string
  * @param callback Function to handle received messages
  */
@@ -147,22 +166,29 @@ export const subscribeToTopic = (topic: string, callback: (message: string) => v
     throw new Error('MQTT client is not connected');
   }
 
+  const existingCallbacks = topicCallbacks.get(topic);
+
+  if (existingCallbacks) {
+    // Topic already subscribed, just add the callback
+    existingCallbacks.push(callback);
+    mqttMessage(`Added callback to existing subscription for topic: ${topic}`);
+    return;
+  }
+
+  // First subscription to this topic
+  topicCallbacks.set(topic, [callback]);
+
   client.subscribe(topic, (error) => {
     if (error) {
+      topicCallbacks.delete(topic);
       throw error;
     }
     mqttMessage(`Subscribed to topic: ${topic}`);
   });
-
-  client.on('message', (receivedTopic, message) => {
-    if (receivedTopic === topic) {
-      callback(message.toString());
-    }
-  });
 };
 
 /**
- * Unsubscribe from a given MQTT topic.
+ * Unsubscribe from a given MQTT topic and clean up callbacks.
  * @param topic MQTT topic string
  */
 export const unsubscribeFromTopic = (topic: string): void => {
@@ -170,10 +196,21 @@ export const unsubscribeFromTopic = (topic: string): void => {
     throw new Error('MQTT client is not connected');
   }
 
+  topicCallbacks.delete(topic);
+
   client.unsubscribe(topic, (error) => {
     if (error) {
       throw error;
     }
     mqttMessage(`Unsubscribed from topic: ${topic}`);
   });
+};
+
+/**
+ * Check if a topic is currently subscribed.
+ * @param topic MQTT topic string
+ * @returns True if subscribed, false otherwise
+ */
+export const isTopicSubscribed = (topic: string): boolean => {
+  return topicCallbacks.has(topic);
 };

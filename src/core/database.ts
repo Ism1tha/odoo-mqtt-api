@@ -56,8 +56,13 @@ export const query = async (sql: string, params: unknown[] = []): Promise<unknow
  * Execute a SQL statement (INSERT, UPDATE, DELETE).
  * @param sql SQL statement string
  * @param params Statement parameters
+ * @returns RunResult with changes count and lastID
  */
-export const run = async (sql: string, params: unknown[] = []): Promise<void> => {
+export const run = async (
+  sql: string,
+  params: unknown[] = []
+): Promise<{ changes: number; lastID: number }> => {
   if (!db) throw new Error('Database not initialized. Call setupDatabase first.');
-  await db.run(sql, params);
+  const result = await db.run(sql, params);
+  return { changes: result.changes || 0, lastID: result.lastID || 0 };
 };
