@@ -34,6 +34,20 @@ export class OdooService {
   }
 
   /**
+   * Create the headers for Odoo API requests, including authentication if enabled.
+   * @returns Headers object for HTTP requests
+   */
+  private createHeaders(): Record<string, string> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+    if (this.config.authEnabled && this.config.authPassword) {
+      headers['Authorization'] = `Bearer ${this.config.authPassword}`;
+    }
+
+    return headers;
+  }
+
+  /**
    * Update the status of a manufacturing order in Odoo.
    * @param productionId Odoo manufacturing order/production ID
    * @param status New status ('done' or 'failed')
@@ -47,24 +61,31 @@ export class OdooService {
   ): Promise<boolean> {
     try {
       const url = `http://${this.config.host}:${this.config.port}/mqtt-integration/update-production-status`;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (this.config.authEnabled && this.config.authPassword) {
-        headers['Authorization'] = `Bearer ${this.config.authPassword}`;
-      }
+      const headers = this.createHeaders();
       const payload = { productionId, status, taskId };
+
       infoMessage(`Updating manufacturing order ${productionId} status to ${status}`);
+
       const response = await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
       });
+
       if (!response.ok) {
         const errorText = await response.text();
-        errorMessage(
-          `Failed to update manufacturing order status: ${response.status} - ${errorText}`
-        );
+
+        if (response.status === 401) {
+          errorMessage('Authentication failed when updating manufacturing order status');
+          errorMessage('Please check your Odoo authentication configuration');
+        } else {
+          errorMessage(
+            `Failed to update manufacturing order status: ${response.status} - ${errorText}`
+          );
+        }
         return false;
       }
+
       infoMessage(`Successfully updated manufacturing order ${productionId} status to ${status}`);
       return true;
     } catch (error) {

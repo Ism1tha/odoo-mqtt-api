@@ -22,12 +22,11 @@ import {
  */
 const { infoMessage, errorMessage } = terminal();
 
-// Singleton OdooService instance
 const odooConfig: OdooConfig = {
   host: process.env.ODOO_HOST || 'localhost',
   port: process.env.ODOO_PORT || '8069',
-  authEnabled: process.env.ODOO_AUTH_ENABLED === 'true',
-  authPassword: process.env.ODOO_AUTH_PASSWORD,
+  authEnabled: process.env.AUTHENTICATION_ENABLED === 'true',
+  authPassword: process.env.AUTHENTICATION_PASSWORD,
 };
 const odooService = new OdooService(odooConfig);
 
