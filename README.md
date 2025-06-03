@@ -2,7 +2,7 @@
 
 ![MQTT Integration Preview](https://i.imgur.com/UudhAIy.png)
 
-> ⚠️ **Early Access Version** - This project is currently in active development. While functional, it may contain bugs and breaking changes. Use with caution in production environments.
+> ⚠️ **Educational Project** - This project is designed for self-education and learning purposes. It may be unfinished, contain bugs, or have breaking changes. Not intended for production use.
 
 A Node.js API that connects Odoo manufacturing orders with MQTT-enabled robots for automated production workflows.
 
